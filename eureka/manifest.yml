@@ -1,0 +1,6 @@
+---
+applications:
+- name: eureka
+  path: build/libs/eureka.jar
+  host: eureka
+  memory: 512M

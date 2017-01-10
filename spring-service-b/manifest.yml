@@ -1,0 +1,7 @@
+---
+applications:
+- name: spring-service-b
+  memory: 512MB
+  random-route: true
+  path: build/libs/spring-service-b-0.1.0.jar
+
