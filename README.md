@@ -37,7 +37,7 @@ and login by commandline by
 
     cf login -a https://api.local.pcfdev.io --skip-ssl-validation
     
-UI can be found under https://uaa.local.pcfdev.io/login    
+UI can be found under https://console.local.pcfdev.io or https://uaa.local.pcfdev.io/login    
 
 **Start an app and connect to database**
 
@@ -119,6 +119,8 @@ more info can be found here https://docs.cloudfoundry.org/buildpacks/custom.html
     
 ## Spring Cloud Netflix
 
+**service discovery with eureka**
+
 Installing Eureka, let's build it and start it in CF
 
     $ cd eureka
@@ -132,7 +134,7 @@ Now let's expose it as service
     cf apps    
     $ cf create-user-provided-service eureka-service -p '{"uri":"http://eureka:changeme@eureka.local.pcfdev.io"}'
   
-Eureka is up and running (UI on port 8761) as user-provided service instance (http://docs.pivotal.io/pivotalcf/1-9/devguide/services/user-provided.html)
+Eureka is up and running (UI http://eureka.local.pcfdev.io 8761) as user-provided service instance (http://docs.pivotal.io/pivotalcf/1-9/devguide/services/user-provided.html)
 User-provided service instances can be used to deliver service credentials to an application, and/or to trigger streaming of application logs to a syslog compatible consumer
 
 Now let's deploy 2 services which register at eureka and 
@@ -154,7 +156,7 @@ a third one which retrieves the data from eureka
     $ ./gradlew build
     $ cf push
     $ cf bind-service service-discovery-example eureka-service
-    $ cf restart service-discovery-example
+    $ cf restage service-discovery-example
 
 open the index urls of the services and you should get something like:
 
@@ -164,10 +166,69 @@ open the index urls of the services and you should get something like:
 
 a more advanced example can be found here https://github.com/joshlong/service-registration-and-discovery   
     
+**Client-Side Load Balancing with Ribbon**
+
+Let us now scale service-a
+
+    cf scale spring-service-a -i 2
+    
+the call to http://spring-service-a-....local.pcfdev.io    
+should now return different string depending on which instance
+is requested, a call to will now be loadbalanced
+
+    http://service-discovery-example-...local.pcfdev.io/lb-test
+
+**circuit breaker**
+
+remove the service a now and upload a faulty version of it
+
+    $ cf delete spring-service-a
+    $ cd spring-service-faulty-a
+    $ ./gradlew build
+    $ cf push       
+    $ cf bind-service spring-service-a eureka-service
+    $ cf restage spring-service-a
+     
+
+The service in spring-service-faulty-a has the name spring-service-a.
+Spring-service-faulty-a gives correct responses at every even minute and crashes on not-even minutes.
+Now call http://service-discovery-example-besprent-millipoise.local.pcfdev.io/circuit-breaker
+which is equal to lb-test apart from the circuit breaker protection
+If the services do not response hystrix will close the connection and returns a default value "They do not respond"
+
+Let's make visible whether a circuit is closed:
+
+    $ cf marketplace
+    $ cf marketplace -s p-circuit-breaker-dashboard
+    $ cf create-service p-circuit-breaker-dashboard standard circuit-breaker-dashboard
+    $ cf service circuit-breaker-dashboard
+    $ cf bind-service service-discovery-example circuit-breaker-dashboard
+
+more details can be found at:
+
+* https://docs.pivotal.io/spring-cloud-services/1-3/circuit-breaker/creating-an-instance.html    
+* https://docs.pivotal.io/spring-cloud-services/1-3/circuit-breaker/writing-client-applications.html    
+
+## zipkin
+
+Lets push a zipkin server
+
+    $ wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec'
+    $ cf push zipkin-server -p zipkin.jar -m 512M
+
+you can see the UI of zipkin on http://zipkin-server.local.pcfdev.io
+
+    $ cf bind-service zipkin-server eureka-service
+    $ cf cups zipkin -p '{"uri":"http://zipkin-server.local.pcfdev.io"}'
+    $ cf bind-service service-discovery-example zipkin
+    $ cf bind-service spring-service-a zipkin
+
+     
 ## more hints    
 
 more spring cloud examples
 http://projects.spring.io/spring-cloud/
+http://projects.spring.io/spring-cloud/#quick-start
 
 How PCF Works 
 https://docs.pivotal.io/pivotalcf/concepts
@@ -175,3 +236,4 @@ https://docs.pivotal.io/pivotalcf/concepts
 PCF Documentation 
 https://docs.pivotal.io/pivotalcf/installing/pcf-docs.html
 
+cf push appname [-b buildpack_name] [-c start_command] [-f manifest_path] [-i instance_number] [-k disk_limit] [-m memory_limit] [-n host_name] [-p app_path] [-s stack_name] [-t timeout_length] [--no-hostname] [--no-manifest] [--no-route] [--no-start] [--random-route]

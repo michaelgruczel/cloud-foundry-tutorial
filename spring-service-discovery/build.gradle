@@ -29,7 +29,14 @@ dependencies {
     // tag::actuator[]
     compile("org.springframework.boot:spring-boot-starter-actuator")
     // end::actuator[]
+    //service discovery
     compile 'org.springframework.cloud:spring-cloud-starter-eureka-server:1.2.3.RELEASE'
+    compile 'org.springframework.cloud:spring-cloud-netflix:1.2.3.RELEASE'
+    //hystrix
+    compile 'org.springframework.cloud:spring-cloud-starter-hystrix:1.2.3.RELEASE'
+    //zipkin
+    compile 'org.springframework.cloud:spring-cloud-sleuth:1.1.0.RELEASE'
+    compile 'org.springframework.cloud:spring-cloud-sleuth-zipkin:1.1.0.RELEASE'
     // tag::tests[]
     testCompile("org.springframework.boot:spring-boot-starter-test")
     // end::tests[]

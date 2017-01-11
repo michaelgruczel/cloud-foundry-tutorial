@@ -4,4 +4,6 @@ applications:
   memory: 512MB
   random-route: true
   path: build/libs/service-discovery-example-0.1.0.jar
+env:
+    SPRING_PROFILES_ACTIVE: cloud  
 

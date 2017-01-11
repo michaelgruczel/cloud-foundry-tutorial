@@ -8,7 +8,7 @@ public class HelloController {
     
     @RequestMapping("/")
     public String index() {    
-        return "Greetings from service a";
+        return "Greetings from service a, started at " + Application.START;
     }
     
 }
