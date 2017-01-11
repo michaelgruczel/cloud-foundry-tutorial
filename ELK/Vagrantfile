@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = "ubuntu/trusty64"
+  # config.vm.box_check_update = false
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
+  config.vm.network "forwarded_port", guest: 80, host: 5600 
+  config.vm.network "forwarded_port", guest: 9200, host: 9200 
+  
+  config.vm.network "private_network", ip: "192.168.33.10"
+  # config.vm.network "public_network"
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+
+  config.vm.provision "shell", inline: <<-SHELL
+     wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -     
+     echo 'deb http://packages.elasticsearch.org/elasticsearch/1.1/debian stable main' | sudo tee -a /etc/apt/sources.list
+     echo 'deb http://packages.elasticsearch.org/logstash/1.4/debian stable main' | sudo tee -a /etc/apt/sources.list
+     sudo apt-get update
+     sudo apt-get install -y openjdk-7-jre
+     sudo apt-get install -y elasticsearch
+     sudo cp /vagrant/vagrant/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml 
+     sudo service elasticsearch restart
+     sudo apt-get install -y apache2
+     cd /var/www/html && sudo wget https://download.elasticsearch.org/kibana/kibana/kibana-latest.tar.gz
+     cd /var/www/html && sudo tar zxf kibana-latest.tar.gz
+     cd /var/www/html && sudo mv kibana-latest kibana
+     sudo service apache2 start
+     
+     sudo apt-get install -y logstash
+     sudo cp /vagrant/vagrant/logstash.config /etc/logstash/conf.d/syslog.conf
+     sudo service logstash restart
+  SHELL
+end

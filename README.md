@@ -223,6 +223,40 @@ you can see the UI of zipkin on http://zipkin-server.local.pcfdev.io
     $ cf bind-service service-discovery-example zipkin
     $ cf bind-service spring-service-a zipkin
 
+## application logging
+     
+in case cf logs APP or cf logs APP --recent does not make you happy,
+you maybe want to direct the logs to an ELK stack.
+
+setup an ELK stack in a virtual box
+
+    $ cd ELK
+    $ vagrant up
+
+let's bind it
+
+    $ cf cups logstash-drain -l syslog://192.168.33.10:5000
+    $ cf bind-service service-discovery-example logstash-drain
+    $ cf restage service-discovery-example   
+    
+now you should see the logs in Kibana http://localhost:5600/kibana/index.html#/dashboard/file/logstash.json   
+
+in case of issues check:
+
+* /var/log/elasticsearch (vagrant ssh)
+* /etc/elasticsearch/elasticsearch.yml (vagrant ssh)
+* sudo service elasticsearch status (vagrant ssh)
+* echo -n "test message 3" | nc -4u -w1 localhost 5000 (vagrant ssh)
+* /var/log/logstash/logstash.log(vagrant ssh)
+* http://localhost:9200/_nodes
+* http://192.168.33.10:9200
+
+## blue/gree deployments
+
+by default cloud foundry stops all instance before starting new ones,
+but it is possible to do a blue/green deployment
+
+TODO
      
 ## more hints    
 
