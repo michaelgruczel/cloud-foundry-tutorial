@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: ${spring.application.name}-${spring.application.instance_id}
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        healthCheckPath: ${management.contextPath}/health
+        healthCheckInterval: 15s
+        tags: foo, bar
+logging:
+  level:
+    org.springframework.cloud.consul: INFO     
