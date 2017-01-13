@@ -1,16 +1,20 @@
 spring:
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        serviceId: ${spring.application.name}-${spring.application.instance_id}
-    consul:
-      host: localhost
-      port: 8500
-      discovery:
-        healthCheckPath: ${management.contextPath}/health
-        healthCheckInterval: 15s
-        tags: foo, bar
+ application:
+  name: spring-cloud-consul
+ cloud:
+  consul:
+   config: 
+    prefix: config
+    defaultContext: helloService
+   discovery: 
+    instanceId: ${spring.application.name}:${spring.application.instance.id:${random.value}}
+    healthCheckPath: /${spring.application.name}/health
+    healthCheckInterval: 15s
+    tags: foo, bar
+endpoints:
+ shutdown:
+  enabled: true       
 logging:
   level:
-    org.springframework.cloud.consul: INFO     
+    org.springframework.cloud.consul: INFO  
+  

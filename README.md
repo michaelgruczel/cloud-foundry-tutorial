@@ -254,9 +254,160 @@ in case of issues check:
 ## blue/gree deployments
 
 by default cloud foundry stops all instance before starting new ones,
-but it is possible to do a blue/green deployment
+but it is possible to do a blue/green deployment.
+This is done by deploying the new version under a different route
+and then moving the route by map-route
+
+let's say you have pushed a service
+
+    $ cf push my-service-v1 -n my-hostname
+
+then you want to deploy a new version without downtime
+
+    $ cf push my-service-v2 -n my-hostname-temp
+    $ cf map-route my-service-v2 example.com -n my-hostname
+    $ cf unmap-route my-service-v1 example.com -n my-hostname
+    $ cf unmap-route my-hostname-temp.example.com
+    $ cf delete my-service-v1
+    
+There are plugins available to do this for you
+
+install cf-blue-green-deploy:
+
+     $ cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
+     $ cf install-plugin blue-green-deploy -r CF-Community
+
+instead of push
+
+    $ cd spring-service-a
+    $ cf blue-green-deploy spring-service-a
+    $ cf delete spring-service-a-old
+
+the update will appear without any downtime
+
+see https://github.com/bluemixgaragelondon/cf-blue-green-deploy for more details   
+     
+## service discovery with consul
+
+WARNING: This did not work when i have done it, not researched yet why
+
+you can install from https://www.consul.io/downloads.html and copy to /usr/local/bin/consul or brew install consul  
+
+for this tutuorial there is a consul installation in a vagrant box
+ 
+    $ cd consul
+    $ vagrant up
+    $ curl 192.168.33.1:8500/v1/catalog/nodes
+
+take a look into the ui http://192.168.33.11:8500/ui    
+    
+    
+it can be needed to set the hostname with -node   
+
+now deploy the service spring-service-consul, it's comparable to spring-service-faulty-a,
+means it will be unhealthy every not even minute
+apart from giving it the information where consul can be found
+in this example consul is not deployed in cloud foundry itself, so just do
+
+    $ cd spring-service-consul
+    $ ./gradlew clean build
+    $ cf push 
+     
+## config
 
 TODO
+
+deploy cloud config server http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_spring_cloud_config_server     
+or start as service
+
+http://docs.pivotal.io/spring-cloud-services/1-3/config-server/
+
+cf marketplace -s p-config-server
+$ cf create-service -c '{"git": { "uri": "https://github.com/spring-cloud-samples/config-repo", "cloneOnStart": "true", "repos": { "cook": { "pattern": "cook*", "uri": "https://github.com/spring-cloud-samples/cook-config" } } }, "count": 3 }' p-config-server standard config-server
+$ cf service config-server
+
+{profile} development production 
+{label} can be a Git commit hash as well as a tag or branch nam
+$ cf bind-service cook config-server
+
+$ cf env cook
+
+$ cf set-env cook SPRING_PROFILES_ACTIVE production
+spring.profiles.active=production
+
+
+@RefreshScope
+@Component
+public class Menu {
+
+  @Value("${cook.special}")
+  String special;
+
+  //...
+
+  public String getSpecial() {
+    return special;
+  }
+
+  //...
+
+}
+
+@RestController
+@SpringBootApplication
+public class Application {
+
+    @Autowired
+    private Menu menu;
+
+    @RequestMapping("/restaurant")
+    public String restaurant() {
+      return String.format("Today's special is: %s", menu.getSpecial());
+    }
+    //...
+    
+applications:
+  - name: cook
+    host: cookie
+    services:
+      - config-server
+    env:
+      SPRING_PROFILES_ACTIVE: production
+      
+      
+$ curl http://cookie.apps.wise.com/restaurant
+Today's special is: Pickled Cactus
+
+$ git commit -am "new special"
+[master 3c9ff23] new special
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git push
+
+$ curl -X POST http://cookie.apps.wise.com/refresh
+["cook.special"]
+
+$ curl http://cookie.apps.wise.com/restaurant
+Today's special is: Birdfeather Tea
+
+
+git geht auch per ssh protocol oder git protocol
+          
+
+master
+------
+https://github.com/myorg/configurations
+|- myapp.yml
+|- myapp-development.yml
+|- myapp-production.yml
+
+tag v1.0.0
+----------
+https://github.com/myorg/configurations
+|- myapp.yml
+|- myapp-development.yml
+|- myapp-production.yml     
+     
      
 ## more hints    
 

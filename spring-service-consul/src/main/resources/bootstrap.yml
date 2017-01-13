@@ -1,5 +1,7 @@
 spring:
-  application:
-    name: spring-service-consul
-         
-    
+ cloud:
+  consul:
+   config:
+    enabled: true
+    host: 192.168.33.11
+    port: 8500

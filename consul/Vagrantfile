@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = "ubuntu/trusty64"
+  # config.vm.box_check_update = false
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 8500, host: 8500 
+  config.vm.network "private_network", ip: "192.168.33.11"
+  # config.vm.network "public_network"
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+
+  config.vm.provision "shell", inline: <<-SHELL
+     sudo apt-get update
+     sudo apt-get install -y openjdk-7-jre     
+     sudo apt-get install -y unzip
+     cd /home/vagrant && wget https://releases.hashicorp.com/consul/0.7.2/consul_0.7.2_linux_amd64.zip
+     cd /home/vagrant && unzip consul_0.7.2_linux_amd64.zip
+     cd /home/vagrant && sudo mv consul /usr/bin/consul
+     sudo mkdir /etc/consul.d
+     sudo chmod a+w /etc/consul.d
+     nohup consul agent -dev -ui -client 0.0.0.0 -ui &
+  SHELL
+end
