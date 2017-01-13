@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Message {
 
-  @Value("${configtest.message}")
+  @Value("${config-test.message}")
   String message;
 
   public String getMessage() {

@@ -327,12 +327,15 @@ we will start the configtest service
 It will use configtest.properties by default
 but in our case we will set the profile development so configtest-development.properties will be used
 
+    $ cf marketplace -s p-config-server
+    $ cf create-service p-config-server standard config-server 
+    $ cf update-service config-server -c githubinfo.json
+
+let's push the app (it will not start because of missing properties, that's ok)
+
     $ cd configtest
     $ ./gradlew clean build
     $ cf push
-    $ cf marketplace -s p-config-server
-    $ cf create-service p-config-server standard config-server 
-    $ cf update-service config-server -c cf update-service config-server -c githubinfo.json
  
 more complex stuff would be possible, e.g.
  
@@ -343,8 +346,8 @@ but for this tutorial we don't need that
     $ cf service config-server
     $ cf bind-service config-test config-server
     $ cf set-env configtest SPRING_PROFILES_ACTIVE development
-    $ cf restage
-    $ cf env configtest
+    $ cf restage config-test
+    $ cf env config-test
     $ curl http://config-test.local.pcfdev.io/hello
 
 
