@@ -315,100 +315,61 @@ in this example consul is not deployed in cloud foundry itself, so just do
      
 ## config
 
-TODO
+The config server retrieves his data from a git repository, the apps retrieve that data from the config server.
+The config server can be deployed as normal application or from the marketplace (our approach in this tutorial)
 
-deploy cloud config server http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_spring_cloud_config_server     
-or start as service
+You can use labels and profiles to select different versions of the properties for example for staging_
 
-http://docs.pivotal.io/spring-cloud-services/1-3/config-server/
+* profiles can be things like development or production 
+* label can be a Git commit hash or branch name
 
-cf marketplace -s p-config-server
-$ cf create-service -c '{"git": { "uri": "https://github.com/spring-cloud-samples/config-repo", "cloneOnStart": "true", "repos": { "cook": { "pattern": "cook*", "uri": "https://github.com/spring-cloud-samples/cook-config" } } }, "count": 3 }' p-config-server standard config-server
-$ cf service config-server
+we will start the configtest service
+It will use configtest.properties by default
+but in our case we will set the profile development so configtest-development.properties will be used
 
-{profile} development production 
-{label} can be a Git commit hash as well as a tag or branch nam
-$ cf bind-service cook config-server
+    $ cd configtest
+    $ ./gradlew clean build
+    $ cf push
+    $ cf marketplace -s p-config-server
+    $ cf create-service p-config-server standard config-server 
+    $ cf update-service config-server -c cf update-service config-server -c githubinfo.json
+ 
+more complex stuff would be possible, e.g.
+ 
+    $ cf create-service -c '{"git": { "uri": "https://github.com/michaelgruczel/cloud-foundry-tutorial", "cloneOnStart": "true", "repos": { "cook": { "pattern": "cook*", "uri": "https://github.com/michaelgruczel/config-test" } } }, "count": 3 }' p-config-server standard config-server-complex
 
-$ cf env cook
-
-$ cf set-env cook SPRING_PROFILES_ACTIVE production
-spring.profiles.active=production
-
-
-@RefreshScope
-@Component
-public class Menu {
-
-  @Value("${cook.special}")
-  String special;
-
-  //...
-
-  public String getSpecial() {
-    return special;
-  }
-
-  //...
-
-}
-
-@RestController
-@SpringBootApplication
-public class Application {
-
-    @Autowired
-    private Menu menu;
-
-    @RequestMapping("/restaurant")
-    public String restaurant() {
-      return String.format("Today's special is: %s", menu.getSpecial());
-    }
-    //...
+but for this tutorial we don't need that    
     
-applications:
-  - name: cook
-    host: cookie
-    services:
-      - config-server
-    env:
-      SPRING_PROFILES_ACTIVE: production
-      
-      
-$ curl http://cookie.apps.wise.com/restaurant
-Today's special is: Pickled Cactus
-
-$ git commit -am "new special"
-[master 3c9ff23] new special
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-$ git push
-
-$ curl -X POST http://cookie.apps.wise.com/refresh
-["cook.special"]
-
-$ curl http://cookie.apps.wise.com/restaurant
-Today's special is: Birdfeather Tea
+    $ cf service config-server
+    $ cf bind-service config-test config-server
+    $ cf set-env configtest SPRING_PROFILES_ACTIVE development
+    $ cf restage
+    $ cf env configtest
+    $ curl http://config-test.local.pcfdev.io/hello
 
 
-git geht auch per ssh protocol oder git protocol
-          
+instead of defining the profile on command line it would be possible in application.yml or manifest as well, e.g.
 
-master
-------
-https://github.com/myorg/configurations
-|- myapp.yml
-|- myapp-development.yml
-|- myapp-production.yml
+    applications:
+      - name: cook
+        host: cookie
+        services:
+          - config-server
+        env:
+          SPRING_PROFILES_ACTIVE: production
 
-tag v1.0.0
-----------
-https://github.com/myorg/configurations
-|- myapp.yml
-|- myapp-development.yml
-|- myapp-production.yml     
-     
-     
+a change in the properties (means git push) will change the runtime property by calling the refresh rest interface on the app
+
+    $ git push
+    $ curl -X POST http://configtest.local.pcfdev.io/refresh ["configtest.message"]
+
+
+more details in
+    
+http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_spring_cloud_config_server     
+http://docs.pivotal.io/spring-cloud-services/1-3/config-server/
+http://cloud.spring.io/spring-cloud-config/
+               
 ## more hints    
 
 more spring cloud examples

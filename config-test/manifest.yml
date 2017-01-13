@@ -1,0 +1,7 @@
+---
+applications:
+- name: config-test
+  memory: 512MB
+  random-route: true
+  path: build/libs/config-test-0.1.0.jar
+
