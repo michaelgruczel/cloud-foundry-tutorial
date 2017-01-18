@@ -1,0 +1,11 @@
+nguage: java
+jdk:
+  - oraclejdk8
+env:
+  - TEST_DIR=spring-service-a
+  - TEST_DIR=spring-service-b
+  - TEST_DIR=spring-service-consul
+  - TEST_DIR=spring-service-discovery
+  - TEST_DIR=spring-service-faulty-a
+  - TEST_DIR=eureka
+script: cd $TEST_DIR && ./gradlew build
