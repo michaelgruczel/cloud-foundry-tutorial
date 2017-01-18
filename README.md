@@ -1,5 +1,7 @@
 # cloud foundry tutorial
 
+![travis status](https://travis-ci.org/michaelgruczel/loud-foundry-tutorial.svg?branch=master)
+
 local development on cloud foundry for java developers
 
 PCF Dev - Pivotal Cloud Foundry for Local Development - https://pivotal.io/pcf-dev
